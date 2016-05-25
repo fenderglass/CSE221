@@ -189,7 +189,7 @@ void threadCreateOverhead()
 		diffNs.push_back(tHelper.ticksToNanoseconds(diff));
 	}
 	
-	std::cerr << "System call overhead: \n\t"
+	std::cerr << "Thread create overhead: \n\t"
 			  << "Cycles mean: " << meanVec(diffCycles) 
 			  << ", std: " << stdVec(diffCycles)
 			  << "\n\tTime (ns) mean: " << meanVec(diffNs) 
@@ -200,9 +200,9 @@ void threadCreateOverhead()
 
 int main(int argc, char** argv)
 {
-	timeReadingOverhead();
-	funcCallOverhead();
-	systemCallOverhead();
+	//timeReadingOverhead();
+	//funcCallOverhead();
+	//systemCallOverhead();
 	processCreateOverhead();
 	threadCreateOverhead();
 	return 0;
