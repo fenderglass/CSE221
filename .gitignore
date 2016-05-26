@@ -2,3 +2,6 @@
 *.pyc
 *.swp
 cpu/cpu
+memory/memory
+net/server
+net/client
