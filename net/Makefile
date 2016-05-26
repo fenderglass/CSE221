@@ -1,14 +1,11 @@
-all: server.o client.o
-	g++ server.o -o server
-	g++ client.o -o client
+all: server client
 
-server.o: server.cpp timer.h
-	g++ -O0 server.cpp -c -o server.o
+server: server.cpp timer.h
+	g++ -O0 server.cpp -o server
 
-client.o: client.cpp timer.h
-	g++ -O0 client.cpp -c -o client.o
+client: client.cpp timer.h
+	g++ -O0 client.cpp -o client
 
 clean:
-	rm *.o
 	rm server
 	rm client

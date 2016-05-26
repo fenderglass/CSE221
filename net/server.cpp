@@ -17,26 +17,6 @@ namespace
 	TimerHelper tHelper;
 }
 
-template <class T>
-double meanVec(const std::vector<T>& vals)
-{
-	double sum = 0.0f;
-	for (size_t i = 0; i < vals.size(); ++i) sum += vals[i];
-	return sum / vals.size();
-}
-
-template <class T>
-double stdVec(const std::vector<T>& vals)
-{
-	double mean = meanVec(vals);
-	double sum = 0;
-	for (size_t i = 0; i < vals.size(); ++i) 
-	{
-		sum += (vals[i] - mean) * (vals[i] - mean);
-	}
-	return sqrt(sum / vals.size());
-}
-
 static int gSocket = 0;
 
 static void sigingHandler(int signo)
@@ -50,13 +30,18 @@ static void sigingHandler(int signo)
 
 int main(int argc , char *argv[])
 {
-	static const int NUM_MEASUREMENTS = 100000;
+	const int MSG_SIZE = 1024 * 1024;
+	const int NUM_BAND = 1000;
+	const int NUM_ECHO = 100000;
+
+	size_t timeOne = 0;
+	size_t timeTwo = 0;
 
 	signal(SIGINT, sigingHandler);
     sockaddr_in serverStruct;
     serverStruct.sin_family = AF_INET;
     serverStruct.sin_addr.s_addr = INADDR_ANY;
-    serverStruct.sin_port = htons(9999);
+    serverStruct.sin_port = htons(9998);
      
 	int yes = 1;
     gSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -65,6 +50,8 @@ int main(int argc , char *argv[])
 		throw std::runtime_error("Bind failed");
     listen(gSocket, 10);
      
+    char buff[MSG_SIZE];
+	for (int i = 0; i < MSG_SIZE; ++i) buff[i] = 42;
     while(true)
     {
 		sockaddr_in client_struct;
@@ -75,15 +62,24 @@ int main(int argc , char *argv[])
 			throw std::runtime_error("Can't accept");
 
 		std::cerr << "Connected\n";
-        char buff;
-        for (int j = 0; j < NUM_MEASUREMENTS; ++j) 
+
+        char echoBuf;
+        for (int j = 0; j < NUM_ECHO; ++j) 
 		{
-            recv(clientSock, &buff, sizeof(buff), 0);
-            send(clientSock, &buff, sizeof(buff), 0);
+            recv(clientSock, &echoBuf, sizeof(echoBuf), 0);
+            send(clientSock, &echoBuf, sizeof(echoBuf), 0);
         }
-		//size_t te = rdtsc();
+
+		for (int i = 0; i < NUM_BAND; ++i)
+		{
+        	send(clientSock, &buff, MSG_SIZE, 0);
+		}
+
+		timeOne = rdtsc();
         close(clientSock);
-		//size_t ts = rdtsc();
+		timeTwo = rdtsc();
+		std::cerr << "Teardown: " << tHelper.ticksToNanoseconds(timeTwo - timeOne) 
+				  << " ns\n";
     }
     return 0;
 }

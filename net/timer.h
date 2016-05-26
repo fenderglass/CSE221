@@ -44,11 +44,9 @@ private:
 		uint64_t end;
 
 		clock_gettime(CLOCK_MONOTONIC, &beginSpec);
-		//RTDSC(begin);
 		begin = rdtsc();
 		LOAD_CPU;
 		end = rdtsc();
-		//RTDSC(end);
 		clock_gettime(CLOCK_MONOTONIC, &endSpec);
 
 		static struct timespec timeDiff;

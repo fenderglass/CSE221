@@ -39,27 +39,37 @@ double stdVec(const std::vector<T>& vals)
 
 int main(int argc , char *argv[])
 {
-	static const int NUM_MEASUREMENTS = 100000;
+	const int MSG_SIZE = 1024 * 1024;
+	const int NUM_BAND = 1000;
+	const int NUM_ECHO = 100000;
 
+	size_t timeOne = 0;
+	size_t timeTwo = 0;
+	
 	sockaddr_in serverStruct;
     serverStruct.sin_addr.s_addr = inet_addr(argv[1]);
     serverStruct.sin_family = AF_INET;
-    serverStruct.sin_port = htons(9999);
+    serverStruct.sin_port = htons(9998);
     
     int socketDesc = socket(AF_INET, SOCK_STREAM, 0);
+
+	timeOne = rdtsc();
 	connect(socketDesc, (sockaddr *)&serverStruct, sizeof(serverStruct));
+	timeTwo = rdtsc();
+	std::cerr << "Setup: " << tHelper.ticksToNanoseconds(timeTwo - timeOne) 
+			  << " ns\n";
      
-	char buff;
-	size_t timeOne = 0;;
-	size_t timeTwo = 0;
+	char buff[MSG_SIZE];
+	for (int i = 0; i < MSG_SIZE; ++i) buff[i] = 42;
 
 	std::vector<double> diffCycles;
 	std::vector<double> diffTime;
-	for (int j = 0; j < NUM_MEASUREMENTS; ++j) 
+	char echoBuff;
+	for (int j = 0; j < NUM_ECHO; ++j) 
 	{
 		timeOne = rdtsc();
-		send(socketDesc, &buff, sizeof(buff), 0);
-		recv(socketDesc, &buff, sizeof(buff), 0);
+		send(socketDesc, &echoBuff, sizeof(echoBuff), 0);
+		recv(socketDesc, &echoBuff, sizeof(echoBuff), 0);
 		timeTwo = rdtsc();
 
 		double diff = (double)(timeTwo - timeOne);
@@ -71,6 +81,22 @@ int main(int argc , char *argv[])
 			  << "Cycles mean: " << meanVec(diffCycles) 
 			  << ", std: " << stdVec(diffCycles)
 			  << "\n\tTime (ns) mean: " << meanVec(diffTime) 
+			  << ", std: " << stdVec(diffTime) << std::endl << std::endl;
+
+	diffTime.clear();
+	for (int j = 0; j < NUM_BAND; ++j) 
+	{
+		ssize_t bytesRead;
+		timeOne = rdtsc();
+		bytesRead = recv(socketDesc, buff, MSG_SIZE, MSG_WAITALL);
+		timeTwo = rdtsc();
+
+		double diff = (double)(timeTwo - timeOne);
+		diffTime.push_back(1000000000 / tHelper.ticksToNanoseconds(diff));
+	}
+
+	std::cerr << "Bandwidth (MBytes/s): "
+			  << "\n\tMean: " << meanVec(diffTime) 
 			  << ", std: " << stdVec(diffTime) << std::endl << std::endl;
 
 	close(socketDesc);
