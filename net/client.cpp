@@ -64,7 +64,7 @@ int main(int argc , char *argv[])
 
 	std::vector<double> diffCycles;
 	std::vector<double> diffTime;
-	char echoBuff;
+	char echoBuff[1024];
 	for (int j = 0; j < NUM_ECHO; ++j) 
 	{
 		timeOne = rdtsc();
@@ -88,6 +88,7 @@ int main(int argc , char *argv[])
 	{
 		ssize_t bytesRead;
 		timeOne = rdtsc();
+		send(socketDesc, &echoBuff, sizeof(echoBuff), 0);
 		bytesRead = recv(socketDesc, buff, MSG_SIZE, MSG_WAITALL);
 		timeTwo = rdtsc();
 

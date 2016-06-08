@@ -63,7 +63,7 @@ int main(int argc , char *argv[])
 
 		std::cerr << "Connected\n";
 
-        char echoBuf;
+        char echoBuf[1024];
         for (int j = 0; j < NUM_ECHO; ++j) 
 		{
             recv(clientSock, &echoBuf, sizeof(echoBuf), 0);
@@ -72,6 +72,7 @@ int main(int argc , char *argv[])
 
 		for (int i = 0; i < NUM_BAND; ++i)
 		{
+            recv(clientSock, &echoBuf, sizeof(echoBuf), 0);
         	send(clientSock, &buff, MSG_SIZE, 0);
 		}
 
