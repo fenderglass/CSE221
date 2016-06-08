@@ -5,3 +5,5 @@ cpu/cpu
 memory/memory
 net/server
 net/client
+fs/fs-cache-size
+fs/read-performance

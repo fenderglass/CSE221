@@ -1,9 +1,11 @@
 #include <vector>
 #include <cmath>
-#include <cstdlib>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <cstring>
+#include <cstdlib>
+#include <malloc.h>
 
 #include "timer.h"
 
@@ -47,29 +49,29 @@ void sequentialRead(const std::vector<std::string> files)
 
 	uint64_t timeOne = 0;
 	uint64_t timeTwo = 0;
-	std::vector<uint64_t> diffNs;
 
-	const size_t BUFF_SIZE = 4 * 1024;
-	char* buffer = new char[BUFF_SIZE];
+	const size_t BUFF_SIZE = 4096;
+	char* buffer = (char*)memalign(BUFF_SIZE, BUFF_SIZE);
 	for (auto file : files)
 	{
-		size_t fileSize = getFileSize(file) / 1024 / 1024;
+		std::vector<uint64_t> diffNs;
+		float fileSize = (float)getFileSize(file) / 1024 / 1024;
 		int numReads = getFileSize(file) / BUFF_SIZE;
 
+		int fd = open(file.c_str(), O_DIRECT | O_RDWR);
 		for (int i = 0; i < MEASUREMENTS; ++i)
 		{
-			int fd = open(file.c_str(), O_SYNC | O_DIRECT);
 			timeOne = rdtsc();
 			for (int i = 0; i < numReads; ++i)
 			{
 				pread(fd, buffer, BUFF_SIZE, i * BUFF_SIZE);
 			}
 			timeTwo = rdtsc();
-			close(fd);
 			
 			double diff = (timeTwo - timeOne);
-			diffNs.push_back((double)tHelper.ticksToNanoseconds(diff) / 1000);
+			diffNs.push_back((double)tHelper.ticksToNanoseconds(diff) / 1000000);
 		}
+		close(fd);
 
 		std::cerr << "File size (MB) " << fileSize
 				  << "\n\tSequential page read time (ms): " << meanVec(diffNs) / numReads
@@ -84,12 +86,12 @@ void randomRead(const std::vector<std::string> files)
 
 	uint64_t timeOne = 0;
 	uint64_t timeTwo = 0;
-	std::vector<uint64_t> diffNs;
 
-	const size_t BUFF_SIZE = 4 * 1024;
-	char* buffer = new char[BUFF_SIZE];
+	const size_t BUFF_SIZE = 4096;
+	char* buffer = (char*)memalign(BUFF_SIZE, BUFF_SIZE);
 	for (auto file : files)
 	{
+		std::vector<uint64_t> diffNs;
 		size_t fileSize = getFileSize(file) / 1024 / 1024;
 		int numReads = getFileSize(file) / BUFF_SIZE;
 
@@ -102,7 +104,8 @@ void randomRead(const std::vector<std::string> files)
 
 		for (int i = 0; i < MEASUREMENTS; ++i)
 		{
-			int fd = open(file.c_str(), O_SYNC | O_DIRECT);
+			int fd = open(file.c_str(), O_DIRECT);
+			pread(fd, buffer, BUFF_SIZE, 0);
 			timeOne = rdtsc();
 			for (int i = 0; i < numReads; ++i)
 			{
@@ -112,7 +115,7 @@ void randomRead(const std::vector<std::string> files)
 			close(fd);
 			
 			double diff = (timeTwo - timeOne);
-			diffNs.push_back((double)tHelper.ticksToNanoseconds(diff) / 1000);
+			diffNs.push_back((double)tHelper.ticksToNanoseconds(diff) / 1000000);
 		}
 
 		std::cerr << "File size (MB) " << fileSize

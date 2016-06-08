@@ -47,7 +47,6 @@ void fileReadTime(const std::vector<std::string> files)
 
 	uint64_t timeOne = 0;
 	uint64_t timeTwo = 0;
-	std::vector<uint64_t> diffNs;
 
 	const size_t BUFF_SIZE = 128 * 1024;
 	char* buffer = new char[BUFF_SIZE];
@@ -55,16 +54,14 @@ void fileReadTime(const std::vector<std::string> files)
 	{
 		size_t fileSize = getFileSize(file) / 1024 / 1024;
 
+		std::vector<uint64_t> diffNs;
 		for (int i = 0; i < MEASUREMENTS; ++i)
 		{
 			int fd = open(file.c_str(), O_RDONLY);
-			//FILE* fp = fopen(file.c_str(), "rb");
 			timeOne = rdtsc();
 			while (read(fd, buffer, BUFF_SIZE)) {;}
-			//while(fread(buffer, BUFF_SIZE, 1, fp)) {;}
 			timeTwo = rdtsc();
 			close(fd);
-			//fclose(fp);
 			
 			double diff = (timeTwo - timeOne);
 			diffNs.push_back((double)tHelper.ticksToNanoseconds(diff) / 1000000);
@@ -74,7 +71,6 @@ void fileReadTime(const std::vector<std::string> files)
 				  << "\n\tReading time for 1 MB (milisecs) mean: " << meanVec(diffNs) / fileSize
 				  << ", std: " << stdVec(diffNs) / fileSize << std::endl << std::endl;
 	}
-
 }
 
 
