@@ -27,7 +27,7 @@ public:
 		this->calibrateTicks();
 	}
 
-	double ticksToNanoseconds(uint64_t ticks)
+	double ticksToNanoseconds(double ticks)
 	{
 		return (double)ticks / _ticksPerNs;
 	}

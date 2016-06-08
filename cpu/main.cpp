@@ -76,6 +76,34 @@ void timeReadingOverhead()
 	timeReadMes();
 }
 
+/////////
+void loopOverhead()
+{
+	const int ITERS_PER_MEASUREMENT = 1000;
+	const int MEASUREMENTS = 1000;
+
+	uint64_t timeOne = 0;
+	uint64_t timeTwo = 0;
+	std::vector<uint64_t> diffCycles;
+	std::vector<uint64_t> diffNs;
+
+	for (int i = 0; i < MEASUREMENTS; ++i)
+	{
+		timeOne = rdtsc();
+		for (int i = 0; i < ITERS_PER_MEASUREMENT; ++i) {;}
+		timeTwo = rdtsc();
+		double diff = (double)(timeTwo - timeOne) / ITERS_PER_MEASUREMENT;
+		diffCycles.push_back(diff);
+		diffNs.push_back(tHelper.ticksToNanoseconds(diff));
+	}
+	
+	std::cerr << "Loop overhead: \n\t"
+			  << "Cycles mean: " << meanVec(diffCycles) 
+			  << ", std: " << stdVec(diffCycles)
+			  << "\n\tTime (ns) mean: " << meanVec(diffNs) 
+			  << ", std: " << stdVec(diffNs) << std::endl;
+}
+
 /////////////////////////////////////////////////////////
 //Function call overhead
 
@@ -200,9 +228,10 @@ void threadCreateOverhead()
 
 int main(int argc, char** argv)
 {
-	//timeReadingOverhead();
-	//funcCallOverhead();
-	//systemCallOverhead();
+	timeReadingOverhead();
+	loopOverhead();
+	funcCallOverhead();
+	systemCallOverhead();
 	processCreateOverhead();
 	threadCreateOverhead();
 	return 0;
