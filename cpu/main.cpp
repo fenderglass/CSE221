@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <stdio.h>
 
 #include <unistd.h>
 #include <sys/syscall.h>
@@ -225,6 +226,91 @@ void threadCreateOverhead()
 }
 
 ///////////////////////////////////
+void processContextSwitchingOverhead()
+{
+	const int MEASUREMENTS = 1000;
+
+	std::vector<uint64_t> diffCycles;
+	std::vector<uint64_t> diffNs;
+	uint64_t timeOne = 0;
+	uint64_t timeTwo = 0;
+
+	for (size_t i = 0; i < MEASUREMENTS; ++i)
+	{
+		int fd[2];
+		pipe(fd);
+		char buf;
+
+		pid_t pid = fork();
+		if (pid == 0)
+		{
+			write(fd[1], &buf, 1);
+			_exit(0);
+		}
+		else
+		{
+			timeOne = rdtsc();
+			read(fd[0], &buf, 1);
+			timeTwo = rdtsc();
+
+			double diff = (double)(timeTwo - timeOne) / 2;
+			diffCycles.push_back(diff);
+			diffNs.push_back(tHelper.ticksToNanoseconds(diff));
+		}
+	}
+
+	std::cerr << "Process context switching overhead: \n\t"
+			  << "Cycles mean: " << meanVec(diffCycles) 
+			  << ", std: " << stdVec(diffCycles)
+			  << "\n\tTime (ns) mean: " << meanVec(diffNs) 
+			  << ", std: " << stdVec(diffNs) << std::endl;
+}
+
+void* pthreadWriter(void* pipe) 
+{
+	char buf;
+	int* fd = (int*)pipe;
+
+	write(fd[1], &buf, 1);
+
+	pthread_exit(NULL);
+}
+
+void threadContextSwitchingOverhead()
+{
+	const int MEASUREMENTS = 10000;
+
+	std::vector<uint64_t> diffCycles;
+	std::vector<uint64_t> diffNs;
+	uint64_t timeOne = 0;
+	uint64_t timeTwo = 0;
+
+	for (size_t i = 0; i < MEASUREMENTS; ++i)
+	{
+		int fd[2];
+		pipe(fd);
+		char buf;
+		pthread_t t;
+		
+		t = pthread_create(&t, NULL, pthreadWriter, (void *)fd);
+
+		timeOne = rdtsc();
+		read(fd[0], &buf, 1);
+		timeTwo = rdtsc();
+
+		double diff = (double)(timeTwo - timeOne) / 2;
+		diffCycles.push_back(diff);
+		diffNs.push_back(tHelper.ticksToNanoseconds(diff));
+	}
+
+	std::cerr << "Thread context switching overhead: \n\t"
+			  << "Cycles mean: " << meanVec(diffCycles) 
+			  << ", std: " << stdVec(diffCycles)
+			  << "\n\tTime (ns) mean: " << meanVec(diffNs) 
+			  << ", std: " << stdVec(diffNs) << std::endl;
+}
+
+///////////////////////////////////
 
 int main(int argc, char** argv)
 {
@@ -234,5 +320,7 @@ int main(int argc, char** argv)
 	systemCallOverhead();
 	processCreateOverhead();
 	threadCreateOverhead();
+	processContextSwitchingOverhead();
+	threadContextSwitchingOverhead();
 	return 0;
 }
