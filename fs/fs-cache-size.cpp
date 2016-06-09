@@ -53,6 +53,7 @@ void fileReadTime(const std::vector<std::string> files)
 	for (auto file : files)
 	{
 		size_t fileSize = getFileSize(file) / 1024 / 1024;
+		size_t numPages = getFileSize(file) / 4096;
 
 		std::vector<uint64_t> diffNs;
 		for (int i = 0; i < MEASUREMENTS; ++i)
@@ -68,8 +69,8 @@ void fileReadTime(const std::vector<std::string> files)
 		}
 
 		std::cerr << "File size (MB) " << fileSize
-				  << "\n\tReading time for 1 MB (milisecs) mean: " << meanVec(diffNs) / fileSize
-				  << ", std: " << stdVec(diffNs) / fileSize << std::endl << std::endl;
+				  << "\n\tPage reading time (milisec): " << meanVec(diffNs) / numPages
+				  << ", std: " << stdVec(diffNs) / numPages << std::endl << std::endl;
 	}
 }
 

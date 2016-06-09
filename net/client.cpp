@@ -40,8 +40,8 @@ double stdVec(const std::vector<T>& vals)
 int main(int argc , char *argv[])
 {
 	const int MSG_SIZE = 1024 * 1024;
-	const int NUM_BAND = 1000;
-	const int NUM_ECHO = 100000;
+	const int NUM_BAND = 100;
+	const int NUM_ECHO = 100;
 
 	size_t timeOne = 0;
 	size_t timeTwo = 0;
